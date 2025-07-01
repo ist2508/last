@@ -68,51 +68,52 @@ with label_tab:
             st.success("✅ Labeling selesai.")
 
     if 'df_labelled' in st.session_state:
-        with st.expander("📄 Lihat Hasil Labeling Sebelum Balancing"):
-            st.dataframe(st.session_state.df_labelled.head())
+        st.subheader("📄 Hasil Labeling")
+        st.dataframe(st.session_state.df_labelled.head())
 
-        # Proses balancing
-        st.subheader("⚖️ Balancing Dataset")
-        df = st.session_state.df_labelled.copy()
-        min_jumlah = df['Sentiment'].value_counts().min()
-        df_pos = df[df['Sentiment'] == 'Positif'].sample(min_jumlah, random_state=42)
-        df_net = df[df['Sentiment'] == 'Netral'].sample(min_jumlah, random_state=42)
-        df_neg = df[df['Sentiment'] == 'Negatif'].sample(min_jumlah, random_state=42)
-        df_balanced = pd.concat([df_pos, df_net, df_neg]).sample(frac=1, random_state=42).reset_index(drop=True)
-        df_balanced.to_csv("hasil/Hasil_Labeling_Seimbang.csv", index=False)
-        st.session_state.df_balanced = df_balanced
+        # Tombol download hasil labeling
+        if os.path.exists("hasil/Hasil_Labelling_Data.csv"):
+            with open("hasil/Hasil_Labelling_Data.csv", "rb") as f:
+                st.download_button("⬇️ Unduh Hasil Labeling", f, file_name="hasil_labeling.csv", mime="text/csv")
 
-        # Visualisasi
-        before_counts = df['Sentiment'].value_counts()
-        after_counts = df_balanced['Sentiment'].value_counts()
+        # Hitung distribusi awal
+        distribusi_awal = st.session_state.df_labelled['Sentiment'].value_counts()
+        st.warning("⚠️ Jumlah data tidak seimbang:")
+        for label, count in distribusi_awal.items():
+            st.text(f"{label}: {count}")
 
-        fig, axes = plt.subplots(1, 2, figsize=(12, 5))
-        bars1 = axes[0].bar(before_counts.index, before_counts.values, color=['green', 'gray', 'red'])
-        axes[0].set_title("Distribusi Sebelum Balancing")
-        for bar in bars1:
+        # Diagram batang sebelum balancing
+        fig1, ax1 = plt.subplots()
+        bars = ax1.bar(distribusi_awal.index, distribusi_awal.values, color=['green', 'gray', 'red'])
+        ax1.set_title("Distribusi Sentimen Sebelum Balancing")
+        for bar in bars:
             height = bar.get_height()
-            axes[0].text(bar.get_x() + bar.get_width()/2, height + 2, str(height), ha='center')
+            ax1.text(bar.get_x() + bar.get_width()/2, height + 2, str(height), ha='center')
+        st.pyplot(fig1)
 
-        bars2 = axes[1].bar(after_counts.index, after_counts.values, color=['green', 'gray', 'red'])
-        axes[1].set_title("Distribusi Setelah Balancing")
-        for bar in bars2:
-            height = bar.get_height()
-            axes[1].text(bar.get_x() + bar.get_width()/2, height + 2, str(height), ha='center')
+        # Tombol balancing
+        if st.button("⚖️ Lakukan Balancing Dataset"):
+            df = st.session_state.df_labelled.copy()
+            min_jumlah = df['Sentiment'].value_counts().min()
+            df_pos = df[df['Sentiment'] == 'Positif'].sample(min_jumlah, random_state=42)
+            df_net = df[df['Sentiment'] == 'Netral'].sample(min_jumlah, random_state=42)
+            df_neg = df[df['Sentiment'] == 'Negatif'].sample(min_jumlah, random_state=42)
+            df_balanced = pd.concat([df_pos, df_net, df_neg]).sample(frac=1, random_state=42).reset_index(drop=True)
+            df_balanced.to_csv("hasil/Hasil_Labeling_Seimbang.csv", index=False)
+            st.session_state.df_balanced = df_balanced
 
-        plt.tight_layout()
-        st.pyplot(fig)
-        st.success("✅ Dataset berhasil diseimbangkan dan divisualisasikan.")
+            # Diagram batang setelah balancing
+            distribusi_balanced = df_balanced['Sentiment'].value_counts()
+            fig2, ax2 = plt.subplots()
+            bars2 = ax2.bar(distribusi_balanced.index, distribusi_balanced.values, color=['green', 'gray', 'red'])
+            ax2.set_title("Distribusi Sentimen Setelah Balancing")
+            for bar in bars2:
+                height = bar.get_height()
+                ax2.text(bar.get_x() + bar.get_width()/2, height + 2, str(height), ha='center')
+            st.pyplot(fig2)
 
-        # Tombol download hasil labeling dan hasil seimbang
-        col1, col2 = st.columns(2)
-        with col1:
-            if os.path.exists("hasil/Hasil_Labelling_Data.csv"):
-                with open("hasil/Hasil_Labelling_Data.csv", "rb") as f:
-                    st.download_button("⬇️ Unduh Labeling (Sebelum Balancing)", f, file_name="hasil_labeling.csv", mime="text/csv")
-        with col2:
-            if os.path.exists("hasil/Hasil_Labeling_Seimbang.csv"):
-                with open("hasil/Hasil_Labeling_Seimbang.csv", "rb") as f:
-                    st.download_button("⬇️ Unduh Labeling (Setelah Balancing)", f, file_name="hasil_labeling_seimbang.csv", mime="text/csv")
+            with open("hasil/Hasil_Labeling_Seimbang.csv", "rb") as f:
+                st.download_button("⬇️ Unduh Hasil Labeling (Setelah Balancing)", f, file_name="hasil_labeling_seimbang.csv", mime="text/csv")
 
 # ===========================
 # TAB 4: MODELING
