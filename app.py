@@ -59,16 +59,21 @@ with preprocess_tab:
 # ===========================
 with label_tab:
     st.subheader("🏷️ Tahap Labeling Sentimen")
+
     if st.button("🏷️ Jalankan Labeling"):
         with st.spinner("Menentukan sentimen berdasarkan lexicon..."):
             df_labelled = run_labeling()
-            st.session_state.df_labelled = df_labelled.copy()
             os.makedirs("hasil", exist_ok=True)
             df_labelled.to_csv("hasil/Hasil_Labelling_Data.csv", index=False)
+            st.session_state.df_labelled = df_labelled
             st.success("✅ Labeling selesai.")
 
-    if os.path.exists("hasil/Hasil_Labelling_Data.csv"):
-        df_label_ori = pd.read_csv("hasil/Hasil_Labelling_Data.csv")
+    if 'df_labelled' in st.session_state or os.path.exists("hasil/Hasil_Labelling_Data.csv"):
+        if 'df_labelled' not in st.session_state:
+            st.session_state.df_labelled = pd.read_csv("hasil/Hasil_Labelling_Data.csv")
+
+        df_label_ori = st.session_state.df_labelled.copy()
+
         st.subheader("📄 Hasil Labeling (Sebelum Balancing)")
         st.dataframe(df_label_ori.head())
 
