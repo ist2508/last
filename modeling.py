@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import os
 
 # Fungsi training dan evaluasi Multinomial Naive Bayes
-def run_naive_bayes(labelled_file="Hasil_Labelling_Data.csv"):
+def run_naive_bayes(labelled_file="Hasil_Labelling_Seimbang.csv"):
     df = pd.read_csv(labelled_file)
     df.dropna(subset=['steming_data', 'Sentiment'], inplace=True)
     X = df['steming_data']
