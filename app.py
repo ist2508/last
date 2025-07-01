@@ -68,10 +68,12 @@ with label_tab:
             st.success("✅ Labeling selesai.")
 
     if 'df_labelled' in st.session_state:
-        st.subheader("📊 Balancing Dataset")
-        df = st.session_state.df_labelled.copy()
+        with st.expander("📄 Lihat Hasil Labeling Sebelum Balancing"):
+            st.dataframe(st.session_state.df_labelled.head())
 
         # Proses balancing
+        st.subheader("⚖️ Balancing Dataset")
+        df = st.session_state.df_labelled.copy()
         min_jumlah = df['Sentiment'].value_counts().min()
         df_pos = df[df['Sentiment'] == 'Positif'].sample(min_jumlah, random_state=42)
         df_net = df[df['Sentiment'] == 'Netral'].sample(min_jumlah, random_state=42)
@@ -80,35 +82,37 @@ with label_tab:
         df_balanced.to_csv("hasil/Hasil_Labeling_Seimbang.csv", index=False)
         st.session_state.df_balanced = df_balanced
 
-        # Visualisasi distribusi sebelum dan sesudah balancing
+        # Visualisasi
         before_counts = df['Sentiment'].value_counts()
         after_counts = df_balanced['Sentiment'].value_counts()
 
         fig, axes = plt.subplots(1, 2, figsize=(12, 5))
         bars1 = axes[0].bar(before_counts.index, before_counts.values, color=['green', 'gray', 'red'])
         axes[0].set_title("Distribusi Sebelum Balancing")
-        axes[0].set_xlabel("Kelas Sentimen")
-        axes[0].set_ylabel("Jumlah Data")
         for bar in bars1:
             height = bar.get_height()
-            axes[0].text(bar.get_x() + bar.get_width()/2, height + 2, str(height), ha='center', va='bottom')
+            axes[0].text(bar.get_x() + bar.get_width()/2, height + 2, str(height), ha='center')
 
         bars2 = axes[1].bar(after_counts.index, after_counts.values, color=['green', 'gray', 'red'])
         axes[1].set_title("Distribusi Setelah Balancing")
-        axes[1].set_xlabel("Kelas Sentimen")
-        axes[1].set_ylabel("Jumlah Data")
         for bar in bars2:
             height = bar.get_height()
-            axes[1].text(bar.get_x() + bar.get_width()/2, height + 2, str(height), ha='center', va='bottom')
+            axes[1].text(bar.get_x() + bar.get_width()/2, height + 2, str(height), ha='center')
 
         plt.tight_layout()
         st.pyplot(fig)
+        st.success("✅ Dataset berhasil diseimbangkan dan divisualisasikan.")
 
-        with st.expander("📄 Lihat Hasil Labeling"):
-            st.dataframe(df.head())
-        if os.path.exists("hasil/Hasil_Labelling_Data.csv"):
-            with open("hasil/Hasil_Labelling_Data.csv", "rb") as f:
-                st.download_button("⬇️ Unduh Hasil Labeling", f, file_name="hasil_labeling.csv", mime="text/csv")
+        # Tombol download hasil labeling dan hasil seimbang
+        col1, col2 = st.columns(2)
+        with col1:
+            if os.path.exists("hasil/Hasil_Labelling_Data.csv"):
+                with open("hasil/Hasil_Labelling_Data.csv", "rb") as f:
+                    st.download_button("⬇️ Unduh Labeling (Sebelum Balancing)", f, file_name="hasil_labeling.csv", mime="text/csv")
+        with col2:
+            if os.path.exists("hasil/Hasil_Labeling_Seimbang.csv"):
+                with open("hasil/Hasil_Labeling_Seimbang.csv", "rb") as f:
+                    st.download_button("⬇️ Unduh Labeling (Setelah Balancing)", f, file_name="hasil_labeling_seimbang.csv", mime="text/csv")
 
 # ===========================
 # TAB 4: MODELING
