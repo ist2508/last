@@ -64,20 +64,16 @@ with label_tab:
         with st.spinner("Menentukan sentimen berdasarkan lexicon..."):
             df_labelled = run_labeling()
             os.makedirs("hasil", exist_ok=True)
-            df_labelled.to_csv("hasil/Hasil_Labelling_Data.csv", index=False)
+            df_labelled.to_csv("hasil/hasil_labeling_asli.csv", index=False)
             st.session_state.df_labelled = df_labelled
             st.success("✅ Labeling selesai.")
 
-    if 'df_labelled' in st.session_state or os.path.exists("hasil/Hasil_Labelling_Data.csv"):
-        if 'df_labelled' not in st.session_state:
-            st.session_state.df_labelled = pd.read_csv("hasil/Hasil_Labelling_Data.csv")
-
-        df_label_ori = st.session_state.df_labelled.copy()
-
+    if os.path.exists("hasil/hasil_labeling_asli.csv"):
+        df_label_ori = pd.read_csv("hasil/hasil_labeling_asli.csv")
         st.subheader("📄 Hasil Labeling (Sebelum Balancing)")
         st.dataframe(df_label_ori.head())
 
-        with open("hasil/Hasil_Labelling_Data.csv", "rb") as f:
+        with open("hasil/hasil_labeling_asli.csv", "rb") as f:
             st.download_button("⬇️ Unduh Hasil Labeling", f, file_name="hasil_labeling.csv", mime="text/csv")
 
         distribusi_awal = df_label_ori['Sentiment'].value_counts()
@@ -100,7 +96,7 @@ with label_tab:
             df_net = df_bal[df_bal['Sentiment'] == 'Netral'].sample(min_jumlah, random_state=42)
             df_neg = df_bal[df_bal['Sentiment'] == 'Negatif'].sample(min_jumlah, random_state=42)
             df_balanced = pd.concat([df_pos, df_net, df_neg]).sample(frac=1, random_state=42).reset_index(drop=True)
-            df_balanced.to_csv("hasil/Hasil_Labeling_Seimbang.csv", index=False)
+            df_balanced.to_csv("hasil/hasil_labeling_seimbang.csv", index=False)
             st.session_state.df_balanced = df_balanced
 
             distribusi_balanced = df_balanced['Sentiment'].value_counts()
@@ -112,7 +108,7 @@ with label_tab:
                 ax2.text(bar.get_x() + bar.get_width()/2, height + 2, str(height), ha='center')
             st.pyplot(fig2)
 
-            with open("hasil/Hasil_Labeling_Seimbang.csv", "rb") as f:
+            with open("hasil/hasil_labeling_seimbang.csv", "rb") as f:
                 st.download_button("⬇️ Unduh Hasil Labeling (Setelah Balancing)", f, file_name="hasil_labeling_seimbang.csv", mime="text/csv")
 
 # ===========================
