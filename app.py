@@ -68,6 +68,42 @@ with label_tab:
             st.success("✅ Labeling selesai.")
 
     if 'df_labelled' in st.session_state:
+                # Tambahan: Balancing Data dan Visualisasi
+        st.subheader("📊 Balancing Dataset")
+        df = pd.read_csv("hasil/hasil_labeling.csv")
+
+        # Proses balancing
+        min_jumlah = df['Sentiment'].value_counts().min()
+        df_pos = df[df['Sentiment'] == 'Positif'].sample(min_jumlah, random_state=42)
+        df_net = df[df['Sentiment'] == 'Netral'].sample(min_jumlah, random_state=42)
+        df_neg = df[df['Sentiment'] == 'Negatif'].sample(min_jumlah, random_state=42)
+        df_balanced = pd.concat([df_pos, df_net, df_neg]).sample(frac=1, random_state=42).reset_index(drop=True)
+        df_balanced.to_csv("hasil/Hasil_Labeling_Seimbang.csv", index=False)
+
+        # Visualisasi distribusi sebelum dan sesudah balancing
+        import matplotlib.pyplot as plt
+        before_counts = df['Sentiment'].value_counts()
+        after_counts = df_balanced['Sentiment'].value_counts()
+
+        fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+        axes[0].bar(before_counts.index, before_counts.values, color=['green', 'gray', 'red'])
+        axes[0].set_title("Distribusi Sebelum Balancing")
+        axes[0].set_xlabel("Kelas Sentimen")
+        axes[0].set_ylabel("Jumlah Data")
+        for i, v in enumerate(before_counts.values):
+            axes[0].text(i, v + 1, str(v), ha='center')
+
+        axes[1].bar(after_counts.index, after_counts.values, color=['green', 'gray', 'red'])
+        axes[1].set_title("Distribusi Setelah Balancing")
+        axes[1].set_xlabel("Kelas Sentimen")
+        axes[1].set_ylabel("Jumlah Data")
+        for i, v in enumerate(after_counts.values):
+            axes[1].text(i, v + 1, str(v), ha='center')
+
+        plt.tight_layout()
+        st.pyplot(fig)
+        st.success("✅ Dataset berhasil diseimbangkan dan divisualisasikan.")
+
         with st.expander("📄 Lihat Hasil Labeling"):
             st.dataframe(st.session_state.df_labelled.head())
         if os.path.exists("hasil/hasil_labeling.csv"):
