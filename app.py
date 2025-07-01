@@ -64,13 +64,12 @@ with label_tab:
             df_labelled = run_labeling()
             st.session_state.df_labelled = df_labelled
             os.makedirs("hasil", exist_ok=True)
-            df_labelled.to_csv("hasil/hasil_labeling.csv", index=False)
+            df_labelled.to_csv("hasil/Hasil_Labelling_Data.csv", index=False)
             st.success("✅ Labeling selesai.")
 
     if 'df_labelled' in st.session_state:
-                # Tambahan: Balancing Data dan Visualisasi
         st.subheader("📊 Balancing Dataset")
-        df = pd.read_csv("hasil/hasil_labeling.csv")
+        df = st.session_state.df_labelled.copy()
 
         # Proses balancing
         min_jumlah = df['Sentiment'].value_counts().min()
@@ -79,35 +78,36 @@ with label_tab:
         df_neg = df[df['Sentiment'] == 'Negatif'].sample(min_jumlah, random_state=42)
         df_balanced = pd.concat([df_pos, df_net, df_neg]).sample(frac=1, random_state=42).reset_index(drop=True)
         df_balanced.to_csv("hasil/Hasil_Labeling_Seimbang.csv", index=False)
+        st.session_state.df_balanced = df_balanced
 
         # Visualisasi distribusi sebelum dan sesudah balancing
-        import matplotlib.pyplot as plt
         before_counts = df['Sentiment'].value_counts()
         after_counts = df_balanced['Sentiment'].value_counts()
 
         fig, axes = plt.subplots(1, 2, figsize=(12, 5))
-        axes[0].bar(before_counts.index, before_counts.values, color=['green', 'gray', 'red'])
+        bars1 = axes[0].bar(before_counts.index, before_counts.values, color=['green', 'gray', 'red'])
         axes[0].set_title("Distribusi Sebelum Balancing")
         axes[0].set_xlabel("Kelas Sentimen")
         axes[0].set_ylabel("Jumlah Data")
-        for i, v in enumerate(before_counts.values):
-            axes[0].text(i, v + 1, str(v), ha='center')
+        for bar in bars1:
+            height = bar.get_height()
+            axes[0].text(bar.get_x() + bar.get_width()/2, height + 2, str(height), ha='center', va='bottom')
 
-        axes[1].bar(after_counts.index, after_counts.values, color=['green', 'gray', 'red'])
+        bars2 = axes[1].bar(after_counts.index, after_counts.values, color=['green', 'gray', 'red'])
         axes[1].set_title("Distribusi Setelah Balancing")
         axes[1].set_xlabel("Kelas Sentimen")
         axes[1].set_ylabel("Jumlah Data")
-        for i, v in enumerate(after_counts.values):
-            axes[1].text(i, v + 1, str(v), ha='center')
+        for bar in bars2:
+            height = bar.get_height()
+            axes[1].text(bar.get_x() + bar.get_width()/2, height + 2, str(height), ha='center', va='bottom')
 
         plt.tight_layout()
         st.pyplot(fig)
-        st.success("✅ Dataset berhasil diseimbangkan dan divisualisasikan.")
 
         with st.expander("📄 Lihat Hasil Labeling"):
-            st.dataframe(st.session_state.df_labelled.head())
-        if os.path.exists("hasil/hasil_labeling.csv"):
-            with open("hasil/hasil_labeling.csv", "rb") as f:
+            st.dataframe(df.head())
+        if os.path.exists("hasil/Hasil_Labelling_Data.csv"):
+            with open("hasil/Hasil_Labelling_Data.csv", "rb") as f:
                 st.download_button("⬇️ Unduh Hasil Labeling", f, file_name="hasil_labeling.csv", mime="text/csv")
 
 # ===========================
@@ -117,7 +117,7 @@ with model_tab:
     st.subheader("📈 Naive Bayes (Multinomial)")
     if st.button("🔍 Jalankan Model Naive Bayes"):
         with st.spinner("Melatih dan mengevaluasi model..."):
-            accuracy, report, conf_matrix, result_df, *_ , x_train_len, x_test_len = run_naive_bayes()
+            accuracy, report, conf_matrix, result_df, *_ , x_train_len, x_test_len = run_naive_bayes("hasil/Hasil_Labeling_Seimbang.csv")
             st.session_state.accuracy = accuracy
             st.session_state.report = report
             st.session_state.df_pred = result_df
