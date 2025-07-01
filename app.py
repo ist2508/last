@@ -62,16 +62,16 @@ with label_tab:
     if st.button("🏷️ Jalankan Labeling"):
         with st.spinner("Menentukan sentimen berdasarkan lexicon..."):
             df_labelled = run_labeling()
-            st.session_state.df_labelled = df_labelled
+            st.session_state.df_labelled = df_labelled.copy()
             os.makedirs("hasil", exist_ok=True)
             df_labelled.to_csv("hasil/Hasil_Labelling_Data.csv", index=False)
             st.success("✅ Labeling selesai.")
 
     if 'df_labelled' in st.session_state:
-        st.subheader("📄 Hasil Labeling")
+        st.subheader("📄 Hasil Labeling (Sebelum Balancing)")
         st.dataframe(st.session_state.df_labelled.head())
 
-        # Tombol download hasil labeling
+        # Tombol download hasil labeling SEBELUM balancing
         if os.path.exists("hasil/Hasil_Labelling_Data.csv"):
             with open("hasil/Hasil_Labelling_Data.csv", "rb") as f:
                 st.download_button("⬇️ Unduh Hasil Labeling", f, file_name="hasil_labeling.csv", mime="text/csv")
@@ -93,11 +93,11 @@ with label_tab:
 
         # Tombol balancing
         if st.button("⚖️ Lakukan Balancing Dataset"):
-            df = st.session_state.df_labelled.copy()
-            min_jumlah = df['Sentiment'].value_counts().min()
-            df_pos = df[df['Sentiment'] == 'Positif'].sample(min_jumlah, random_state=42)
-            df_net = df[df['Sentiment'] == 'Netral'].sample(min_jumlah, random_state=42)
-            df_neg = df[df['Sentiment'] == 'Negatif'].sample(min_jumlah, random_state=42)
+            df_bal = st.session_state.df_labelled.copy()
+            min_jumlah = df_bal['Sentiment'].value_counts().min()
+            df_pos = df_bal[df_bal['Sentiment'] == 'Positif'].sample(min_jumlah, random_state=42)
+            df_net = df_bal[df_bal['Sentiment'] == 'Netral'].sample(min_jumlah, random_state=42)
+            df_neg = df_bal[df_bal['Sentiment'] == 'Negatif'].sample(min_jumlah, random_state=42)
             df_balanced = pd.concat([df_pos, df_net, df_neg]).sample(frac=1, random_state=42).reset_index(drop=True)
             df_balanced.to_csv("hasil/Hasil_Labeling_Seimbang.csv", index=False)
             st.session_state.df_balanced = df_balanced
