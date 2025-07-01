@@ -67,22 +67,19 @@ with label_tab:
             df_labelled.to_csv("hasil/Hasil_Labelling_Data.csv", index=False)
             st.success("✅ Labeling selesai.")
 
-    if 'df_labelled' in st.session_state:
+    if os.path.exists("hasil/Hasil_Labelling_Data.csv"):
+        df_label_ori = pd.read_csv("hasil/Hasil_Labelling_Data.csv")
         st.subheader("📄 Hasil Labeling (Sebelum Balancing)")
-        st.dataframe(st.session_state.df_labelled.head())
+        st.dataframe(df_label_ori.head())
 
-        # Tombol download hasil labeling SEBELUM balancing
-        if os.path.exists("hasil/Hasil_Labelling_Data.csv"):
-            with open("hasil/Hasil_Labelling_Data.csv", "rb") as f:
-                st.download_button("⬇️ Unduh Hasil Labeling", f, file_name="hasil_labeling.csv", mime="text/csv")
+        with open("hasil/Hasil_Labelling_Data.csv", "rb") as f:
+            st.download_button("⬇️ Unduh Hasil Labeling", f, file_name="hasil_labeling.csv", mime="text/csv")
 
-        # Hitung distribusi awal
-        distribusi_awal = st.session_state.df_labelled['Sentiment'].value_counts()
+        distribusi_awal = df_label_ori['Sentiment'].value_counts()
         st.warning("⚠️ Jumlah data tidak seimbang:")
         for label, count in distribusi_awal.items():
             st.text(f"{label}: {count}")
 
-        # Diagram batang sebelum balancing
         fig1, ax1 = plt.subplots()
         bars = ax1.bar(distribusi_awal.index, distribusi_awal.values, color=['green', 'gray', 'red'])
         ax1.set_title("Distribusi Sentimen Sebelum Balancing")
@@ -91,9 +88,8 @@ with label_tab:
             ax1.text(bar.get_x() + bar.get_width()/2, height + 2, str(height), ha='center')
         st.pyplot(fig1)
 
-        # Tombol balancing
         if st.button("⚖️ Lakukan Balancing Dataset"):
-            df_bal = st.session_state.df_labelled.copy()
+            df_bal = df_label_ori.copy()
             min_jumlah = df_bal['Sentiment'].value_counts().min()
             df_pos = df_bal[df_bal['Sentiment'] == 'Positif'].sample(min_jumlah, random_state=42)
             df_net = df_bal[df_bal['Sentiment'] == 'Netral'].sample(min_jumlah, random_state=42)
@@ -102,7 +98,6 @@ with label_tab:
             df_balanced.to_csv("hasil/Hasil_Labeling_Seimbang.csv", index=False)
             st.session_state.df_balanced = df_balanced
 
-            # Diagram batang setelah balancing
             distribusi_balanced = df_balanced['Sentiment'].value_counts()
             fig2, ax2 = plt.subplots()
             bars2 = ax2.bar(distribusi_balanced.index, distribusi_balanced.values, color=['green', 'gray', 'red'])
